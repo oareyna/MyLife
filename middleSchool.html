@@ -262,19 +262,19 @@
     .band-scene-container.active {
       display: block;
     }
-    
-    /* Blush marks style */
+/*     
+    Blush marks style
     .blush-marks {
       position: absolute;
       z-index: 6; /* Above the character */
-      width: 150px;
+      /* width: 150px;
       opacity: 0;
       transition: opacity 1s ease-in-out;
       top: 59%; /* Positioned from top instead of bottom */
-      left: 18.5%;
+      /* left: 18.5%;
       pointer-events: none;
     }
-    
+     /* */ 
     /* Progress instruction */
     .progress-instruction {
       position: absolute;
@@ -494,8 +494,8 @@
     <img src="/api/placeholder/900/1000" alt="Guy" class="other-character" id="guyCharacter">
     <img src="/api/placeholder/200/100" alt="Clarinet" class="instrument clarinet">
     <img src="/api/placeholder/200/100" alt="Flute" class="instrument flute" id="fluteInstrument">
-    <!-- Added blush marks image -->
-    <img src="/api/placeholder/500/200" alt="Blush Marks" class="blush-marks" id="blushMarks">
+    <!-- Added blush marks image
+    <img src="/api/placeholder/500/200" alt="Blush Marks" class="blush-marks" id="blushMarks"> -->
     <div class="dialog-box" id="dialogBox">
       "Wow, you sound really good! Your sound really matches you."
     </div>
@@ -570,7 +570,7 @@
       document.querySelector('#bandScene .other-character').src = 'guy.png';
       document.querySelector('#bandScene .clarinet').src = 'clarinet.png';
       document.querySelector('#bandScene .flute').src = 'flute.png';
-      document.querySelector('#bandScene .blush-marks').src = 'blush.png';
+      // document.querySelector('#bandScene .blush-marks').src = 'blush.png';
       
       // Confession Scene
       document.querySelector('#confessionScene .background').src = 'band.jpg';
@@ -881,13 +881,13 @@ function advanceDialog() {
           bandSceneStep++;
           break;
           
-        case 3:
-          // Fourth step - show the blush marks after dialogue
-          document.getElementById('blushMarks').style.opacity = '1';
-          bandSceneStep++;
-          break;
+        // case 3:
+        //   // Fourth step - show the blush marks after dialogue
+        //   document.getElementById('blushMarks').style.opacity = '1';
+        //   bandSceneStep++;
+        //   break;
           
-        case 4:
+        case 3:
           // Fifth step - transition to bright scenes message
           document.getElementById('bandScene').style.display = 'none';
           document.getElementById('brightMessage').style.display = 'flex';
@@ -895,7 +895,7 @@ function advanceDialog() {
           bandSceneStep++;
           break;
           
-        case 5:
+        case 4:
           // Sixth step - start bright scenes
           document.getElementById('brightMessage').style.display = 'none';
           currentState = 'brightSequence';
