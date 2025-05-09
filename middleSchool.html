@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Middle School Crush</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Times New Roman", Times, serif;
+      overflow: hidden;
+      background-color: #000;
+      color: #fff;
+    }
+    
+    .scene-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: none;
+    }
+    
+    .scene-container.active {
+      display: block;
+    }
+    
+    .enter-prompt {
+      position: absolute;
+      top: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 24px;
+      font-style: italic;
+      color: #fff;
+      z-index: 10;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      display: none;
+    }
+    
+    .background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      filter: brightness(0.6); /* Darken the background images for dark scenes */
+    }
+    
+    /* Bright scenes don't have the darkness filter */
+    .bright-scene .background {
+      filter: brightness(1.2); /* Slightly brighten the background for bright scenes */
+    }
+    
+    /* Dark overlay for dark scenes */
+    .scene-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent black overlay */
+      z-index: 2; /* Above background but below characters and props */
+      pointer-events: none; /* Allow clicks to pass through */
+    }
+    
+    /* No dark overlay for bright scenes */
+    .bright-scene::after {
+      background-color: rgba(0, 0, 0, 0); /* Transparent overlay for bright scenes */
+    }
+    
+    .character {
+      position: absolute;
+      z-index: 4; /* Above the dark overlay */
+      width: 1000px;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .whole-character {
+      position: absolute;
+      z-index: 4; /* Above the dark overlay */
+      width: 500px;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .prop {
+      position: absolute;
+      z-index: 3; /* Above the dark overlay */
+    }
+    
+    .cloud {
+      position: absolute;
+      z-index: 3; /* Above the dark overlay */
+      width: 200px;
+      top: 20%;
+      left: 30%;
+      animation: floatCloud 20s infinite linear;
+    }
+    
+    .sun {
+      position: absolute;
+      z-index: 3; /* Above the dark overlay */
+      width: 300px;
+      top: 10%;
+      right: 10%;
+      animation: rotateSun 30s infinite linear;
+    }
+    
+    @keyframes floatCloud {
+      0% { left: -10%; }
+      100% { left: 110%; }
+    }
+    
+    @keyframes rotateSun {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .stuff {
+      position: absolute;
+      z-index: 3; /* Above the dark overlay */
+      width: 100px;
+      bottom: 30%;
+      right: 20%;
+    }
+    
+    .title-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    
+    .title {
+      font-size: 48px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .instruction {
+      font-size: 24px;
+      font-style: italic;
+      text-align: center;
+    }
+    
+    .final-message {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      color: #fff;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      font-size: 36px;
+    }
+    
+    .revelation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      color: #fff;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      font-size: 42px;
+      font-style: italic;
+    }
+    
+    /* Band scene specific styles */
+    .main-character {
+      position: absolute;
+      z-index: 4;
+      width: 2000px;
+      bottom: 1000;
+      left: -40%;
+      transform: translatey(-20%);
+    }
+    
+    .other-character {
+      position: absolute;
+      z-index: 4;
+      width: 300px;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(40%);
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    
+    .instrument {
+      position: absolute;
+      z-index: 5;
+      width: 200px;
+    }
+    
+    .clarinet {
+      bottom: 70px;
+      left: 20%;
+      transform: translateX(-60%) rotate(50deg);
+    }
+    
+    .flute {
+      bottom: 100px;
+      left: 70%;
+      transform: translateX(-50%) rotate(25deg);
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    
+    .dialog-box {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      border: 2px solid #fff;
+      border-radius: 10px;
+      padding: 20px;
+      width: 70%;
+      z-index: 10;
+      font-size: 30px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    
+    .band-scene-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: none;
+    }
+    
+    .band-scene-container.active {
+      display: block;
+    }
+    
+    /* Blush marks style */
+    .blush-marks {
+      position: absolute;
+      z-index: 6; /* Above the character */
+      width: 150px;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      top: 59%; /* Positioned from top instead of bottom */
+      left: 18.5%;
+      pointer-events: none;
+    }
+    
+    /* Progress instruction */
+    .progress-instruction {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 20px;
+      font-style: italic;
+      color: #fff;
+      z-index: 20;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    
+    /* Bright version instruction - with darker shadow for visibility */
+    .bright-scene .progress-instruction {
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+    }
+    
+    /* Confession scene styles */
+    .confession-scene-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: none;
+    }
+    
+    .confession-scene-container.active {
+      display: block;
+    }
+    
+    .thought-bubble {
+      position: absolute;
+      bottom: 300px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 2px solid #000;
+      border-radius: 20px;
+      padding: 15px;
+      width: 60%;
+      z-index: 10;
+      font-size: 26px;
+      text-align: center;
+      color: #000;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    
+    .timing-bar-container {
+      position: absolute;
+      bottom: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 40px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border: 2px solid white;
+      border-radius: 20px;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      overflow: hidden;
+    }
+    
+    .timing-target {
+      position: absolute;
+      height: 100%;
+      width: 60px;
+      background-color: rgba(0, 255, 0, 0.5);
+      left: 70%;
+      z-index: 11;
+    }
+    
+    .timing-cursor {
+      position: absolute;
+      height: 100%;
+      width: 10px;
+      background-color: white;
+      z-index: 12;
+      left: 0;
+    }
+    
+    .new-character {
+      position: absolute;
+      z-index: 4;
+      width: 400px;
+      bottom: 0;
+      left: 30%;
+      transform: translatey(-30%);
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    
+    .confused-face {
+      position: absolute;
+      z-index: 7;
+      width: 150px;
+      top: 55%;
+      left: 20%;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    
+    .final-letters {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      color: #fff;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      font-size: 80px;
+      font-weight: bold;
+      letter-spacing: 20px;
+    }
+  </style>
+</head>
+<body>
+    <audio loop id="backgroundMusic">
+        <source src="crush.mp3" type="audio/mp3">
+
+    </audio>
+    
+  <!-- Title Screen -->
+  <div class="title-screen" id="titleScreen">
+    <div class="title">The Middle School Crush</div>
+    <div class="instruction">Press Enter to continue...</div>
+  </div>
+
+  <!-- Dark Scenes -->
+  <!-- Classroom Scene -->
+  <div class="scene-container" id="scene1">
+    <div class="enter-prompt">Press Enter to continue...</div>
+    <img src="/api/placeholder/800/600" alt="Classroom Background" class="background">
+    <img src="/api/placeholder/200/100" alt="Cloud" class="cloud">
+    <img src="/api/placeholder/1000/1000" alt="Reg" class="character">
+    <div class="progress-instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Kitchen Scene -->
+  <div class="scene-container" id="scene2">
+    <div class="enter-prompt">Press Enter to continue...</div>
+    <img src="/api/placeholder/800/600" alt="Kitchen Background" class="background">
+    <img src="/api/placeholder/1000/1000" alt="Reg" class="character">
+    <img src="/api/placeholder/100/100" alt="Stuff" class="stuff">
+    <div class="progress-instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Bedroom Scene -->
+  <div class="scene-container" id="scene3">
+    <div class="enter-prompt">Press Enter to continue...</div>
+    <img src="/api/placeholder/800/600" alt="Bedroom Background" class="background">
+    <img src="/api/placeholder/1000/1000" alt="Reg" class="character">
+    <div class="progress-instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Bright Scenes -->
+  <!-- Bright Classroom Scene -->
+  <div class="scene-container bright-scene" id="brightScene1">
+    <div class="enter-prompt">Press Enter to continue...</div>
+    <img src="/api/placeholder/800/600" alt="Classroom Background" class="background">
+    <img src="/api/placeholder/200/100" alt="Cloud" class="cloud">
+    <img src="/api/placeholder/150/150" alt="Sun" class="sun">
+    <img src="/api/placeholder/1000/1000" alt="Whole" class="whole-character">
+    <div class="progress-instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Bright Kitchen Scene -->
+  <div class="scene-container bright-scene" id="brightScene2">
+    <div class="enter-prompt">Press Enter to continue...</div>
+    <img src="/api/placeholder/800/600" alt="Kitchen Background" class="background">
+    <img src="/api/placeholder/150/150" alt="Sun" class="sun">
+    <img src="/api/placeholder/1000/1000" alt="Whole" class="whole-character">
+    <img src="/api/placeholder/100/100" alt="Stuff" class="stuff">
+    <div class="progress-instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Bright Bedroom Scene -->
+  <div class="scene-container bright-scene" id="brightScene3">
+    <div class="enter-prompt">Press Enter to continue...</div>
+    <img src="/api/placeholder/800/600" alt="Bedroom Background" class="background">
+    <img src="/api/placeholder/150/150" alt="Sun" class="sun">
+    <img src="/api/placeholder/1000/1000" alt="Whole" class="whole-character">
+    <div class="progress-instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Final Message -->
+  <div class="final-message" id="finalMessage">
+    Everyday felt the same
+    <div class="instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Revelation Message -->
+  <div class="revelation" id="revelation">
+    Until one day...
+    <div class="instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Bright Scene Message -->
+  <div class="revelation" id="brightMessage" style="display: none;">
+    And suddenly, everything was brighter...
+    <div class="instruction">Press Enter to continue...</div>
+  </div>
+  
+  <!-- Band Room Scene -->
+  <div class="band-scene-container" id="bandScene">
+    <img src="/api/placeholder/800/600" alt="Band Room Background" class="background">
+    <img src="/api/placeholder/1000/1000" alt="Reg" class="main-character">
+    <img src="/api/placeholder/900/1000" alt="Guy" class="other-character" id="guyCharacter">
+    <img src="/api/placeholder/200/100" alt="Clarinet" class="instrument clarinet">
+    <img src="/api/placeholder/200/100" alt="Flute" class="instrument flute" id="fluteInstrument">
+    <!-- Added blush marks image -->
+    <img src="/api/placeholder/500/200" alt="Blush Marks" class="blush-marks" id="blushMarks">
+    <div class="dialog-box" id="dialogBox">
+      "Wow, you sound really good! Your sound really matches you."
+    </div>
+    <div class="progress-instruction" id="bandSceneInstruction">Press Enter to continue...</div>
+  </div>
+
+  <!-- Confession Scene (New) -->
+  <div class="confession-scene-container" id="confessionScene">
+    <img src="/api/placeholder/800/600" alt="Band Room Background" class="background">
+    <img src="/api/placeholder/1000/1000" alt="Reg" class="main-character">
+    <img src="/api/placeholder/900/1000" alt="Guy" class="other-character" id="confessionGuyCharacter">
+    <img src="/api/placeholder/900/1000" alt="New Character" class="new-character" id="newCharacter">
+    <img src="/api/placeholder/200/200" alt="Confused Face" class="confused-face" id="confusedFace">
+    <div class="thought-bubble" id="thoughtBubble">
+      "Wow, I really like him... I should confess my feelings!"
+    </div>
+    <div class="timing-bar-container" id="timingBarContainer">
+      <div class="timing-target" id="timingTarget"></div>
+      <div class="timing-cursor" id="timingCursor"></div>
+    </div>
+    <div class="dialog-box" id="confessionDialogBox">
+      Press SPACE when the cursor is in the green zone to confess!
+    </div>
+    <div class="progress-instruction" id="confessionInstruction">Press Enter to continue...</div>
+  </div>
+
+  <!-- Final Letters Screen -->
+  <div class="final-letters" id="finalLetters">
+    Letters Revealed: S S
+    <div class="instruction" style="font-size: 24px; margin-top: 40px;">Press Enter to return to title...</div>
+  </div>
+
+  <script>
+    // Replace placeholder images with actual images
+    document.addEventListener('DOMContentLoaded', function() {
+      // Dark Scenes
+      // Scene 1: Classroom
+      document.querySelector('#scene1 .background').src = 'classroom.avif';
+      document.querySelector('#scene1 .cloud').src = 'cloud.png';
+      document.querySelector('#scene1 .character').src = 'reg.png';
+      
+      // Scene 2: Kitchen
+      document.querySelector('#scene2 .background').src = 'kitchen.webp';
+      document.querySelector('#scene2 .character').src = 'reg.png';
+      document.querySelector('#scene2 .stuff').src = 'stuff.png';
+      
+      // Scene 3: Bedroom
+      document.querySelector('#scene3 .background').src = 'bed.webp';
+      document.querySelector('#scene3 .character').src = 'reg.png';
+      
+      // Bright Scenes
+      // Bright Scene 1: Classroom
+      document.querySelector('#brightScene1 .background').src = 'classroom.avif';
+      document.querySelector('#brightScene1 .cloud').src = 'cloud.png';
+      document.querySelector('#brightScene1 .sun').src = 'sunny.png';
+      document.querySelector('#brightScene1 .whole-character').src = 'whole.png';
+      
+      // Bright Scene 2: Kitchen
+      document.querySelector('#brightScene2 .background').src = 'kitchen.webp';
+      document.querySelector('#brightScene2 .sun').src = 'sunny.png';
+      document.querySelector('#brightScene2 .whole-character').src = 'whole.png';
+      document.querySelector('#brightScene2 .stuff').src = 'stuff.png';
+      
+      // Bright Scene 3: Bedroom
+      document.querySelector('#brightScene3 .background').src = 'bed.webp';
+      document.querySelector('#brightScene3 .sun').src = 'sunny.png';
+      document.querySelector('#brightScene3 .whole-character').src = 'whole.png';
+      
+      // Band Scene
+      document.querySelector('#bandScene .background').src = 'band.jpg';
+      document.querySelector('#bandScene .main-character').src = 'reg.png';
+      document.querySelector('#bandScene .other-character').src = 'guy.png';
+      document.querySelector('#bandScene .clarinet').src = 'clarinet.png';
+      document.querySelector('#bandScene .flute').src = 'flute.png';
+      document.querySelector('#bandScene .blush-marks').src = 'blush.png';
+      
+      // Confession Scene
+      document.querySelector('#confessionScene .background').src = 'band.jpg';
+      document.querySelector('#confessionScene .main-character').src = 'reg.png';
+      document.querySelector('#confessionScene .other-character').src = 'guy.png';
+      document.querySelector('#confessionScene .new-character').src = 'newChara.png';
+      document.querySelector('#confessionScene .confused-face').src = 'question.png';
+    });
+    
+    // State variables
+    let currentState = 'title';
+    let currentScene = 0;
+    let currentRound = 1;
+    let bandSceneStep = 0;
+    let confessionSceneStep = 0;
+    let brightSceneMode = false; // Flag to track if we're showing bright scenes
+    let timingBarActive = false;
+    let timingAnimationId = null;
+    let cursorPosition = 0;
+    let cursorDirection = 1; // 1 for right, -1 for left
+    let spacePressed = false;
+    
+    // Initial setup
+    document.addEventListener('keydown', handleKeyPress);
+    
+    // Handle key presses
+    function handleKeyPress(event) {
+      // Handle space bar for timing mini-game
+      if (event.key === ' ' && timingBarActive) {
+        event.preventDefault();
+        handleSpacePress();
+        return;
+      }
+      
+      // Handle Enter key
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        
+        switch (currentState) {
+          case 'title':
+            // Hide title screen and start first scene
+            document.getElementById('titleScreen').style.display = 'none';
+            startSceneSequence();
+            break;
+            
+          case 'betweenRounds':
+            // Start the next round
+            startSceneSequence();
+            break;
+            
+          case 'finalMessage':
+            // Show the revelation
+            document.getElementById('finalMessage').style.display = 'none';
+            document.getElementById('revelation').style.display = 'flex';
+            currentState = 'revelation';
+            break;
+            
+          case 'revelation':
+            // Move to the band scene
+            document.getElementById('revelation').style.display = 'none';
+            document.getElementById('bandScene').style.display = 'block';
+            currentState = 'bandScene';
+            progressBandScene();
+            break;
+            
+          case 'bandScene':
+            // Progress through the band scene steps
+            progressBandScene();
+            break;
+            
+          case 'brightTransition':
+            // Continue after the bright transition message
+            progressBandScene();
+            break;
+            
+          case 'navigating':
+            // Go to next scene when in manual navigation mode (round 1)
+            if (currentRound === 1) {
+              nextScene();
+            }
+            break;
+            
+          case 'brightSequence':
+            // Navigate through bright scenes manually
+            nextBrightScene();
+            break;
+            
+          case 'confessionScene':
+            // Progress through the confession scene
+            progressConfessionScene();
+            break;
+            
+          case 'finalLetters':
+            // Return to title screen after showing final letters
+            document.getElementById('finalLetters').style.display = 'none';
+            document.getElementById('titleScreen').style.display = 'flex';
+            document.querySelector('#titleScreen .title').textContent = "The End";
+            document.querySelector('#titleScreen .instruction').textContent = "Thanks for playing!";
+            // currentState = 'title';
+            // break;
+        }
+      }
+    }
+// Game state variables
+
+// Initialize the game when window loads
+window.onload = function() {
+  // Set up event listeners
+  document.addEventListener('keydown', handleKeyDown);
+  
+  // Start with the timing bar active
+  startTimingBar();
+};
+
+// Handle all keyboard input
+function handleKeyDown(event) {
+  if (event.code === 'Space' && currentState === 'timing') {
+    handleSpacePress();
+  } else if (event.code === 'Enter' && currentState === 'dialog') {
+    advanceDialog();
+  }
+}
+
+// Start the timing mini-game
+function startTimingBar() {
+  const cursor = document.getElementById('timingCursor');
+  let position = 0;
+  let direction = 1; // 1 for right, -1 for left
+  const speed = 5;
+  const maxPosition = 300; // Width of timing bar - cursor width
+  
+  function animate() {
+    position += speed * direction;
+    
+    // Change direction when reaching edges
+    if (position >= maxPosition) {
+      position = maxPosition;
+      direction = -1;
+    } else if (position <= 0) {
+      position = 0;
+      direction = 1;
+    }
+    
+    cursor.style.left = position + 'px';
+    timingAnimationId = requestAnimationFrame(animate);
+  }
+  
+  timingAnimationId = requestAnimationFrame(animate);
+}
+
+// Handle space bar press during timing mini-game
+function handleSpacePress() {
+  if (!timingBarActive || spacePressed) return;
+  
+  spacePressed = true;
+  
+  // Get the positions of cursor and target
+  const cursor = document.getElementById('timingCursor');
+  const target = document.getElementById('timingTarget');
+  const cursorRect = cursor.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  
+  // Check if cursor is within the target zone
+  const cursorCenter = cursorRect.left + cursorRect.width / 2;
+  const targetLeft = targetRect.left;
+  const targetRight = targetRect.right;
+  
+  // Stop the animation
+  cancelAnimationFrame(timingAnimationId);
+  
+  // Hide the timing bar
+  document.getElementById('timingBarContainer').style.opacity = '0';
+  
+  // Set up dialog sequence based on success/fail
+  setupDialogSequence(cursorCenter >= targetLeft && cursorCenter <= targetRight);
+}
+
+// Set up the dialog sequence
+function setupDialogSequence(success) {
+  // Change state to dialog mode
+  currentState = 'dialog';
+  
+  // Create dialog sequence array
+  let dialogSequence;
+  
+  if (success) {
+    // Success sequence
+    dialogSequence = [
+      {
+        text: "I... I've wanted to tell you something...",
+        action: () => {} // No additional action
+      },
+      {
+        text: "New Guy: Hey! I've been looking for you! I've had a crush on you and I wanted to tell you...",
+        action: () => {
+          // Show the new character
+          document.getElementById('newCharacter').style.opacity = '1';
+        }
+      },
+      {
+        text: "...",
+        action: () => {
+          // Show confused face on main character
+          document.getElementById('confusedFace').style.opacity = '1';
+        }
+      },
+      {
+        text: "",
+        action: () => {
+          // End confession scene and show final letters
+          document.getElementById('confessionScene').style.display = 'none';
+          document.getElementById('finalLetters').style.display = 'flex';
+          currentState = 'finalLetters';
+        }
+      }
+    ];
+  } else {
+    // Fail sequence
+    dialogSequence = [
+      {
+        text: "New Guy: Hey! I've been looking for you! I've had a crush on you and I wanted to tell you...",
+        action: () => {
+          // Show the new character interrupting
+          document.getElementById('newCharacter').style.opacity = '1';
+        }
+      },
+      {
+        text: "...",
+        action: () => {
+          // Show confused face on main character
+          document.getElementById('confusedFace').style.opacity = '1';
+        }
+      },
+      {
+        text: "",
+        action: () => {
+          // End confession scene and show final letters
+          document.getElementById('confessionScene').style.display = 'none';
+          document.getElementById('finalLetters').style.display = 'flex';
+          currentState = 'finalLetters';
+        }
+      }
+    ];
+  }
+  
+  // Store dialog sequence and index in global scope
+  window.dialogSequence = dialogSequence;
+  window.currentDialogIndex = 0;
+  
+  // Show the first dialog
+  showCurrentDialog();
+}
+
+// Show the current dialog from the sequence
+function showCurrentDialog() {
+  if (!window.dialogSequence || window.currentDialogIndex >= window.dialogSequence.length) return;
+  
+  const currentDialog = window.dialogSequence[window.currentDialogIndex];
+  const dialogBox = document.getElementById('confessionDialogBox');
+  
+  // Set the dialog text
+  dialogBox.textContent = currentDialog.text;
+  dialogBox.style.opacity = '1';
+  
+  // Execute any associated action
+  if (currentDialog.action) {
+    currentDialog.action();
+  }
+  
+  // Add a visual indicator that user should press Enter
+  if (currentDialog.text) {
+    const indicator = document.createElement('div');
+    indicator.className = 'continue-indicator';
+    indicator.textContent = 'Press Enter to continue...';
+    dialogBox.appendChild(indicator);
+  }
+}
+
+// Advance to the next dialog when Enter is pressed
+function advanceDialog() {
+  if (!window.dialogSequence || window.currentDialogIndex >= window.dialogSequence.length) return;
+  
+  // Move to the next dialog
+  window.currentDialogIndex++;
+  
+  // Show the next dialog
+  showCurrentDialog();
+}
+    
+    // Progress through the band scene steps
+    function progressBandScene() {
+      switch (bandSceneStep) {
+        case 0:
+          // First step - just showing the main character with clarinet
+          bandSceneStep++;
+          break;
+          
+        case 1:
+          // Second step - show the guy character with flute
+          document.getElementById('guyCharacter').style.opacity = '1';
+          document.getElementById('fluteInstrument').style.opacity = '1';
+          bandSceneStep++;
+          break;
+          
+        case 2:
+          // Third step - show the dialog
+          document.getElementById('dialogBox').style.opacity = '1';
+          bandSceneStep++;
+          break;
+          
+        case 3:
+          // Fourth step - show the blush marks after dialogue
+          document.getElementById('blushMarks').style.opacity = '1';
+          bandSceneStep++;
+          break;
+          
+        case 4:
+          // Fifth step - transition to bright scenes message
+          document.getElementById('bandScene').style.display = 'none';
+          document.getElementById('brightMessage').style.display = 'flex';
+          currentState = 'brightTransition';
+          bandSceneStep++;
+          break;
+          
+        case 5:
+          // Sixth step - start bright scenes
+          document.getElementById('brightMessage').style.display = 'none';
+          currentState = 'brightSequence';
+          brightSceneMode = true;
+          currentScene = 1;
+          showBrightScene(currentScene);
+          break;
+      }
+    }
+    
+    // Progress through the confession scene
+    function progressConfessionScene() {
+      switch (confessionSceneStep) {
+        case 0:
+          // First step - show the thought bubble
+          document.getElementById('thoughtBubble').style.opacity = '1';
+          confessionSceneStep++;
+          break;
+          
+        case 1:
+          // Second step - show the timing bar
+          document.getElementById('thoughtBubble').style.opacity = '0';
+          document.getElementById('timingBarContainer').style.opacity = '1';
+          document.getElementById('confessionDialogBox').style.opacity = '1';
+          
+          // Start the timing mini-game
+          startTimingMiniGame();
+          
+          confessionSceneStep++;
+          break;
+      }
+    }
+    
+    // Start the timing mini-game with moving cursor
+    function startTimingMiniGame() {
+      timingBarActive = true;
+      cursorPosition = 0;
+      spacePressed = false;
+      
+      const cursor = document.getElementById('timingCursor');
+      const container = document.getElementById('timingBarContainer');
+      const containerWidth = container.offsetWidth;
+      
+      // Animate the cursor moving back and forth
+      function animateCursor() {
+        // Update cursor position
+        cursorPosition += cursorDirection * 5; // Speed of cursor
+        
+        // Change direction if hitting edges
+        if (cursorPosition >= containerWidth - 10) {
+          cursorDirection = -1;
+        } else if (cursorPosition <= 0) {
+          cursorDirection = 1;
+        }
+        
+        // Update cursor position
+        cursor.style.left = cursorPosition + 'px';
+        
+        // Continue animation if the game is still active
+        if (timingBarActive) {
+          timingAnimationId = requestAnimationFrame(animateCursor);
+        }
+      }
+      
+      // Start the animation
+// Start the animation
+timingAnimationId = requestAnimationFrame(animateCursor);
+    }
+    
+    // Start scene sequence based on current round
+    function startSceneSequence() {
+      // Hide any currently shown scenes
+      backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+      hideAllScenes();
+      
+      // Set up for current round
+      if (currentRound === 1) {
+        // First round - manual navigation through dark scenes
+        currentScene = 1;
+        showDarkScene(currentScene);
+        currentState = 'navigating';
+      } else if (currentRound === 2) {
+        // Second round - automatic cycling through dark scenes
+        currentScene = 1;
+        autoCycleDarkScenes();
+      } else if (currentRound === 3) {
+        // Third round - bright scenes, manual navigation
+        brightSceneMode = true;
+        currentScene = 1;
+        showBrightScene(currentScene);
+        currentState = 'brightSequence';
+      } else {
+        // Move to confession scene after all rounds are done
+        document.getElementById('confessionScene').style.display = 'block';
+        document.getElementById('confessionGuyCharacter').style.opacity = '1';
+        currentState = 'confessionScene';
+        confessionSceneStep = 0;
+      }
+    }
+    
+    // Hide all scenes
+    function hideAllScenes() {
+      document.querySelectorAll('.scene-container, .band-scene-container, .confession-scene-container').forEach(scene => {
+        scene.style.display = 'none';
+      });
+      document.getElementById('finalMessage').style.display = 'none';
+      document.getElementById('revelation').style.display = 'none';
+      document.getElementById('brightMessage').style.display = 'none';
+    }
+    
+    // Show a specific dark scene
+    function showDarkScene(sceneNum) {
+      hideAllScenes();
+      document.getElementById('scene' + sceneNum).style.display = 'block';
+    }
+    
+    // Show a specific bright scene
+    function showBrightScene(sceneNum) {
+      hideAllScenes();
+      document.getElementById('brightScene' + sceneNum).style.display = 'block';
+    }
+    
+    // Navigate to next scene
+    function nextScene() {
+      currentScene++;
+      
+      // Check if we've reached the end of the scenes
+      if (currentScene > 3) {
+        // End of round 1, show the message and prepare for round 2
+        hideAllScenes();
+        document.getElementById('finalMessage').style.display = 'flex';
+        currentState = 'finalMessage';
+        currentRound = 2;
+        return;
+      }
+      
+      // Show the next scene
+      showDarkScene(currentScene);
+    }
+    
+    // Navigate to next bright scene
+    function nextBrightScene() {
+      currentScene++;
+      
+      // Check if we've reached the end of the bright scenes
+      if (currentScene > 3) {
+        // End of round 3, move to confession scene
+        hideAllScenes();
+        document.getElementById('confessionScene').style.display = 'block';
+        document.getElementById('confessionGuyCharacter').style.opacity = '1';
+        currentState = 'confessionScene';
+        confessionSceneStep = 0;
+        return;
+      }
+      
+      // Show the next bright scene
+      showBrightScene(currentScene);
+    }
+    
+    // Auto-cycle through dark scenes for round 2
+    function autoCycleDarkScenes() {
+      // Start with scene 1
+      showDarkScene(1);
+      
+      // Set up a sequence to cycle through scenes
+      setTimeout(() => {
+        showDarkScene(2);
+        
+        setTimeout(() => {
+          showDarkScene(3);
+          
+          setTimeout(() => {
+            // End of round 2, prepare for round 3
+            hideAllScenes();
+            currentRound = 3;
+            currentState = 'betweenRounds';
+            document.getElementById('finalMessage').style.display = 'flex';
+            document.getElementById('finalMessage').textContent = 'Everyday felt the same... again.';
+            document.getElementById('finalMessage').appendChild(document.createElement('div')).className = 'instruction';
+            document.getElementById('finalMessage').querySelector('.instruction').textContent = 'Press Enter to continue...';
+          }, 2000); // Time for scene 3
+        }, 2000); // Time for scene 2
+      }, 2000); // Time for scene 1
+    }
+  </script>
+</body>
+</html>

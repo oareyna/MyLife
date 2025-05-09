@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Four Event Navigation</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0ff;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .box-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: 20px;
+      margin-bottom: 20px;
+    }
+    .box {
+      background-color: #6a0dad; /* purple */
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      box-shadow: 0 0 0 2px #3f3f3f;
+    }
+    .box:hover {
+      background-color: #4b0082; /* dark purple */
+    }
+    .box.locked {
+      background-color: #9999cc; /* muted blue/purple */
+      cursor: not-allowed;
+    }
+    .box.locked:hover {
+      background-color: #8888bb;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #2e2e8f;
+      font-weight: normal;
+    }
+    .password-container {
+      background-color: #e6e6ff;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 0 1px #4b0082;
+    }
+    input {
+      padding: 10px;
+      width: 200px;
+      border: 1px solid #4b0082;
+      margin-right: 10px;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4b0082;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    button:hover {
+      background-color: #350062;
+    }
+    .message {
+      margin-top: 10px;
+    }
+    .correct {
+      color: #006600;
+    }
+    .incorrect {
+      color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>My Life</h1>
+
+    <div class="password-container">
+      <h2>Password for Event 4 [Unscramble the Letters]</h2>
+      <input type="password" id="passwordInput" placeholder="Enter password" />
+      <button id="checkPassword">Password</button>
+      <div id="message" class="message"></div>
+    </div>
+
+    <div class="box-container">
+      <!-- First row -->
+      <div class="box" onclick="location.href='bluebonnet.html'">
+        <h2>Event 1</h2>
+        <br><br>
+      </div>
+      <div class="box" onclick="location.href='middleSchool.html'">
+        <h2>Event 2</h2>
+        <br><br>
+      </div>
+
+      <!-- Second row -->
+      <div class="box" onclick="location.href='survivor.html'">
+        <h2>Event 3</h2>
+        <br><br>
+      </div>
+      <div class="box locked" id="box4">
+        <h2>Event 4</h2>
+        <p>Password Required</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const correctPassword = "lesson";
+
+    document.getElementById("checkPassword").addEventListener("click", function () {
+      const passwordInput = document.getElementById("passwordInput").value;
+      const messageElement = document.getElementById("message");
+      const box4 = document.getElementById("box4");
+
+      if (passwordInput.toLocaleLowerCase() == correctPassword) {
+        messageElement.textContent = "Correct password! Event 4 is now unlocked.";
+        messageElement.className = "message correct";
+
+        box4.classList.remove("locked");
+        box4.onclick = function () {
+          location.href = "finalScene.html";
+        };
+        box4.style.backgroundColor = "#6a0dad";
+        box4.style.cursor = "pointer";
+        box4.querySelector("p").textContent = "Click to visit Event 4";
+      } else {
+        messageElement.textContent = "Incorrect password! Please try again.";
+        messageElement.className = "message incorrect";
+      }
+    });
+  </script>
+</body>
+</html>

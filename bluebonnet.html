@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scene 1 - A Sea of Blue</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Georgia', serif;
+      background-color: #000;
+      color: white;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('blue.png'); /* Your field background */
+      background-size: cover;
+      background-position: center;
+      transition: background-image 2s ease-in-out;
+    }
+    
+    .scene.home-scene, .scene.wilted-scene {
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: #000;
+    }
+
+    .dialogue-box {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 50, 0.75);
+      padding: 20px 30px;
+      border: 2px solid #99ccff;
+      border-radius: 10px;
+      max-width: 80%;
+      font-size: 1.5em;
+      text-align: center;
+      animation: fadeIn 2s ease-out;
+      z-index: 2;
+    }
+
+    .start-screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      z-index: 3;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .pick-flower {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.2em;
+      background-color: rgba(0, 0, 50, 0.75);
+      padding: 10px 20px;
+      border-radius: 5px;
+      color: #99ccff;
+      display: none;
+      z-index: 2;
+    }
+
+    .controls-info {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.2em;
+      background-color: rgba(0, 0, 50, 0.75);
+      padding: 10px 20px;
+      border-radius: 5px;
+      color: #99ccff;
+      display: none;
+      z-index: 2;
+      text-align: center;
+    }
+
+    #motherImage {
+      display: none;
+      position: absolute;
+      bottom: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      z-index: 2;
+      transition: transform 3s ease-in-out, left 3s ease-in-out;
+    }
+
+    #bluebonnet {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100px;
+      height: 150px;
+      z-index: 3; /* Above player */
+      transition: all 0.5s ease;
+    }
+
+    .fade-out {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      opacity: 0;
+      transition: opacity 2s ease-in;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .letters-revealed {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #fff;
+      z-index: 10;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .days-passing {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3em;
+      color: white;
+      text-align: center;
+      background: rgba(0,0,0,0.7);
+      padding: 20px 40px;
+      border-radius: 10px;
+      z-index: 6;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+  </style>
+  <audio loop id="backgroundMusic">
+    <source src="bluebonnetsong.mp3" type="audio/mp3">
+    
+  </audio>
+</head>
+<body>
+  
+  <div class="start-screen" id="startScreen">
+    Scene One<br><small>Press Enter to start</small>
+  </div>
+
+  <div class="scene" id="scene">
+    <div class="dialogue-box" id="dialogueBox">
+      "I've never seen something so beautiful..."<br>
+      <i>It was just a sea of blue.</i>
+      <div class="press-enter">Press Enter to continue</div>
+    </div>
+    <div class="pick-flower" id="pickFlowerText">Press E to pick flower</div>
+    <div class="controls-info" id="controlsInfo">Move with Arrow Keys or WASD</div>
+    <img id="motherImage" src="m.png">
+    <img id="bluebonnet" src="actualblue.png">
+    <canvas id="gameCanvas"></canvas>
+    <div class="fade-out" id="fadeOut"></div>
+    <div class="days-passing" id="daysPassing">A few days later...</div>
+    <div class="letters-revealed" id="lettersRevealed" style="display:none;">Letters revealed: E L</div>
+  </div>
+
+  <script>
+    const backgroundMusic = document.getElementById("backgroundMusic");
+
+    // DOM Elements
+    const startScreen = document.getElementById("startScreen");
+    const scene = document.getElementById("scene");
+    const dialogueBox = document.getElementById("dialogueBox");
+    const pickFlowerText = document.getElementById("pickFlowerText");
+    const controlsInfo = document.getElementById("controlsInfo");
+    const motherImage = document.getElementById("motherImage");
+    const bluebonnet = document.getElementById("bluebonnet");
+    const canvas = document.getElementById("gameCanvas");
+    const fadeOut = document.getElementById("fadeOut");
+    const daysPassing = document.getElementById("daysPassing");
+    const lettersRevealed = document.getElementById("lettersRevealed");
+    const ctx = canvas.getContext("2d");
+
+    // Set canvas dimensions
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Load images
+    const playerImg = new Image();
+    playerImg.src = "reg.png";
+    playerImg.onload = () => console.log("Player image loaded");
+
+    const flowerImg = new Image();
+    flowerImg.src = "actualblue.png";
+    flowerImg.onload = () => console.log("Flower image loaded");
+
+    // Game objects
+    const player = { x: 100, y: 100, w: 600, h: 500, speed: 10 };
+    const keys = {};
+
+    // Flowers array
+    let flowers = [
+      { x: 400, y: 300, w: 40, h: 80, picked: false },
+      { x: 600, y: 450, w: 40, h: 80, picked: false },
+      { x: 800, y: 200, w: 40, h: 80, picked: false },
+      { x: 300, y: 500, w: 40, h: 80, picked: false },
+      // { x: 700, y: 600, w: 40, h: 80, picked: false },
+      { x: 200, y: 100, w: 40, h: 80, picked: false },
+      { x: 1000, y: 400, w: 40, h: 80, picked: false }
+    ];
+    
+    // Game state variables
+    let pickedFlowers = 0;
+    let canCollect = false;
+    let gameState = "start";
+    let motherTalking = false;
+    let readyToLeave = false;
+    let motherLeft = false;
+    let hiddenFlower = false;
+    let currentScene = "field";
+    let animationId = null;
+    let isTransitioning = false;
+    let debugMode = true; // Set to true to show debug info in console
+    let endingDialogueIndex = 0; // Track which part of ending dialogue we're on
+
+    // Ending dialogue lines
+    const endingDialogues = [
+      "The blue bonnet would have lasted longer in the ground.",
+      "Beauty really shines most where it most desires to be.",
+      "Sometimes the things we take for ourselves wither faster than memories.",
+      "The lesson of the bluebonnet remains with you."
+    ];
+
+    // Helper functions
+    function debug(message) {
+      if (debugMode) console.log(`[DEBUG] ${message}`);
+    }
+
+    function getCenter(obj) {
+      return { x: obj.x + obj.w / 2, y: obj.y + obj.h / 2 };
+    }
+
+    function isNear(obj1, obj2) {
+      const c1 = getCenter(obj1);
+      const c2 = getCenter(obj2);
+      const dx = c1.x - c2.x;
+      const dy = c1.y - c2.y;
+      return Math.sqrt(dx * dx + dy * dy) < 150;
+    }
+
+    // Game update function
+    function update() {
+      // Skip update if not in a state that needs it
+      if (gameState !== "playing" && gameState !== "sneaking" && gameState !== "exiting" && gameState !== "home") {
+        return;
+      }
+      
+      // Skip update if mother is talking or transitioning
+      if (motherTalking && gameState !== "exiting") return;
+      
+      debug(`Update: gameState=${gameState}, motherTalking=${motherTalking}, isTransitioning=${isTransitioning}`);
+
+      // Handle movement based on game state
+      if (gameState === "exiting") {
+        // In exiting state, force movement to the right with increased speed
+        const exitSpeed = player.speed * 3; // Triple the normal speed when exiting
+        player.x += exitSpeed;
+        
+        // Update flower position if player has it
+        if (hiddenFlower) {
+          bluebonnet.style.top = (player.y + player.h/2 - 50) + "px";
+          bluebonnet.style.left = (player.x + player.w/2) + "px";
+        }
+        
+        // Check if player is well off screen
+        if (player.x > canvas.width + player.w) {
+          debug(`Player far enough off screen: ${player.x} > ${canvas.width + player.w}`);
+          handleExitComplete();
+        }
+      } else {
+        // Normal movement for other states - supporting both arrow keys and WASD
+        if (keys["ArrowUp"] || keys["w"] || keys["W"]) player.y -= player.speed;
+        if (keys["ArrowDown"] || keys["s"] || keys["S"]) player.y += player.speed;
+        if (keys["ArrowLeft"] || keys["a"] || keys["A"]) player.x -= player.speed;
+        if (keys["ArrowRight"] || keys["d"] || keys["D"]) player.x += player.speed;
+      }
+
+      // Keep player within bounds except when exiting
+      if (gameState !== "exiting") {
+        player.x = Math.max(-player.w/2, Math.min(canvas.width - player.w/2, player.x));
+        player.y = Math.max(-player.h/2, Math.min(canvas.height - player.h/2, player.y));
+      }
+
+      // Check for nearby flowers in field scene
+      if (currentScene === "field" && canCollect) {
+        let nearFlower = false;
+        flowers.forEach(f => {
+          if (!f.picked && isNear(player, f)) nearFlower = true;
+        });
+        pickFlowerText.style.display = nearFlower ? "block" : "none";
+      }
+
+      // Check for mother intervention trigger
+      if (pickedFlowers === 3 && !motherTalking && gameState === "playing") {
+        showMotherIntervention();
+        // Hide controls info when mother appears
+        controlsInfo.style.display = "none";
+      }
+    }
+
+    // Draw function
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw flowers in field scene
+      if (currentScene === "field") {
+        flowers.forEach(f => {
+          if (!f.picked) {
+            ctx.drawImage(flowerImg, f.x, f.y, f.w, f.h);
+          }
+        });
+      }
+
+      // Draw player character
+      ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+    }
+
+    // Main game loop
+    function gameLoop() {
+      update();
+      draw();
+      
+      // Directly check for exit condition here as well for redundancy
+      if (gameState === "exiting" && player.x > canvas.width + player.w) {
+        debug("Exit condition met in game loop");
+        handleExitComplete();
+        return; // Don't request another frame
+      }
+      
+      animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // Game state handlers
+    function showMotherIntervention() {
+      debug("Mother intervention triggered");
+      dialogueBox.style.display = "block";
+      dialogueBox.innerHTML = `"You know, picking bluebonnets is illegal,"<br>
+        "They're our state flower, and it's better to leave them in the wild, so they can spread across Texas."<br>
+        <div class="press-enter">Press Enter to continue</div>`;
+      motherImage.style.display = "block";
+      canCollect = false;
+      motherTalking = true;
+    }
+
+    function moveMotherOffScreen() {
+      debug("Moving mother off screen");
+      isTransitioning = true;
+      motherImage.style.left = window.innerWidth + 300 + "px";
+      
+      setTimeout(() => {
+        motherLeft = true;
+        motherImage.style.display = "none";
+        
+        dialogueBox.style.display = "block";
+        dialogueBox.innerHTML = `<i>I'll just take one anyway... no one will notice.</i><br>
+        <div class="press-enter">Press Enter to continue</div>`;
+        
+        gameState = "sneaking";
+        isTransitioning = false;
+        debug("Mother transition complete, now in sneaking state");
+      }, 3000);
+    }
+
+    function handleExitComplete() {
+      if (isTransitioning) return;
+      
+      debug("Player exited screen, transitioning to home");
+      isTransitioning = true;
+      fadeOut.style.opacity = "1";
+      
+      // Force cancellation of any ongoing animation frames to prevent issues
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      setTimeout(() => {
+        transitionToHome();
+      }, 2000);
+    }
+    
+    function transitionToHome() {
+      debug("Transitioning to home scene");
+      currentScene = "home";
+      gameState = "home";
+      
+      scene.style.backgroundImage = "url('one.png')";
+      scene.className = "scene home-scene"; // Add home-scene class
+      fadeOut.style.opacity = "0";
+      
+      player.x = 100;
+      player.y = 300;
+      
+      bluebonnet.style.display = "block";
+      bluebonnet.style.top = (player.y + player.h/2 - 50) + "px";
+      bluebonnet.style.left = (player.x + player.w/2) + "px";
+      
+      pickFlowerText.textContent = "Press E to place bluebonnet in vase";
+      pickFlowerText.style.display = "block";
+      // Controls info remains hidden
+
+      draw();
+      isTransitioning = false;
+      
+      // Restart animation loop
+      if (!animationId) {
+        animationId = requestAnimationFrame(gameLoop);
+      }
+      
+      debug("Home scene ready");
+    }
+    
+    function placeBluebonnetInVase() {
+      if (isTransitioning) return;
+      
+      debug("Placing bluebonnet in vase");
+      isTransitioning = true;
+      bluebonnet.style.display = "none";
+      scene.style.backgroundImage = "url('two.png')";
+      // Keep the home-scene class for consistent sizing
+      scene.className = "scene home-scene";
+      pickFlowerText.style.display = "none";
+      controlsInfo.style.display = "none";
+      
+      setTimeout(() => {
+        daysPassing.style.opacity = "1";
+        
+        setTimeout(() => {
+          daysPassing.style.opacity = "0";
+          
+          setTimeout(() => {
+            transitionToWiltedScene();
+          }, 1000);
+        }, 2000);
+      }, 1500);
+    }
+    
+    function transitionToWiltedScene() {
+      debug("Transitioning to wilted scene");
+      scene.style.backgroundImage = "url('three.png')";
+      scene.className = "scene wilted-scene"; // Add wilted-scene class
+      currentScene = "wilted";
+      
+      player.x = 400;
+      player.y = 300;
+      
+      // Reset ending dialogue index
+      endingDialogueIndex = 0;
+      showNextEndingDialogue();
+      
+      gameState = "ending";
+      isTransitioning = false;
+      draw();
+    }
+    
+    function showNextEndingDialogue() {
+      if (endingDialogueIndex < endingDialogues.length) {
+        dialogueBox.style.display = "block";
+        dialogueBox.innerHTML = `${endingDialogues[endingDialogueIndex]}<br>
+          <div class="press-enter">Press Enter to continue</div>`;
+        
+        debug(`Showing ending dialogue ${endingDialogueIndex + 1}/${endingDialogues.length}`);
+        endingDialogueIndex++;
+      } else {
+        // All dialogues completed
+        dialogueBox.style.display = "none";
+        lettersRevealed.style.display = "block";
+        debug("Ending dialogue complete, showing letters revealed");
+      }
+    }
+
+    // Event handlers
+    window.addEventListener("keydown", (e) => {
+      if (isTransitioning) return;
+      
+      keys[e.key] = true;
+      debug(`Key pressed: ${e.key}, gameState: ${gameState}`);
+
+      if (e.key === "Enter") {
+        handleEnterKey();
+      }
+      
+      if (e.key.toLowerCase() === "e") {
+        handleEKey();
+      }
+    });
+
+    function handleEnterKey() {
+      if (isTransitioning) return;
+      
+      switch (gameState) {
+        case "start":
+          startScreen.style.display = "none";
+          dialogueBox.style.display = "block";
+          gameState = "dialogue";
+          backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+          debug("Game started, showing initial dialogue");
+          break;
+          
+        case "dialogue":
+          dialogueBox.style.display = "none";
+          canvas.style.display = "block";
+          canCollect = true;
+          gameState = "playing";
+          // Show controls info
+          controlsInfo.style.display = "block";
+          animationId = requestAnimationFrame(gameLoop);
+          debug("Initial dialogue closed, game playing");
+          break;
+          
+        case "playing":
+          if (motherTalking) {
+            dialogueBox.style.display = "none";
+            moveMotherOffScreen();
+            debug("Mother dialogue closed, mother leaving");
+          }
+          break;
+          
+        case "sneaking":
+          dialogueBox.style.display = "none";
+          gameState = "exiting";
+          motherLeft = true;
+          hiddenFlower = true;
+          
+          // Find an unpicked flower to "secretly pick"
+          for (let f of flowers) {
+            if (!f.picked) {
+              f.picked = true;
+              break;
+            }
+          }
+          
+          bluebonnet.style.display = "block";
+          bluebonnet.style.top = (player.y + player.h/2 - 50) + "px";
+          bluebonnet.style.left = (player.x + player.w/2) + "px";
+          
+          // Force the player to exit - add this for immediate movement
+          player.x += 20; // Give an initial push
+          
+          debug("Player sneaking flower, now exiting");
+          break;
+          
+        case "ending":
+          if (isTransitioning) return;
+          
+          // Show next ending dialogue or end scene
+          showNextEndingDialogue();
+          break;
+      }
+    }
+
+    function handleEKey() {
+      if (isTransitioning) return;
+      
+      if (gameState === "playing" && canCollect && !motherTalking) {
+        // Picking flowers in field
+        flowers.forEach(f => {
+          if (!f.picked && isNear(player, f)) {
+            f.picked = true;
+            pickedFlowers++;
+            pickFlowerText.style.display = "none";
+            debug(`Flower picked! Total: ${pickedFlowers}`);
+          }
+        });
+      } else if (gameState === "home" && !isTransitioning) {
+        // Placing flower in vase
+        placeBluebonnetInVase();
+      }
+    }
+
+    window.addEventListener("keyup", (e) => {
+      keys[e.key] = false;
+    });
+
+    // Handle window resize
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    });
+
+    // Initialize
+    debug("Game initialized");
+    dialogueBox.style.display = "none";
+    controlsInfo.style.display = "none";
+    
+    // Force scene class reset
+    scene.className = "scene";
+    
+    // Make sure events are properly triggered even without focus
+    window.addEventListener("load", () => {
+      canvas.focus();
+      debug("Canvas focused on load");
+    });
+  </script>
+</body>
+</html>
