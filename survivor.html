@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survivor Interactive Scene</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Times New Roman", Times, serif;
+        }
+        
+        #scene {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background-color: black;
+            overflow: hidden;
+        }
+        
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #character {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 66%;
+            object-fit: contain;
+        }
+        
+        #thoughtsContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .thought {
+            position: absolute;
+            width: 13%;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.5s;
+            animation: fadeInOut 1s forwards;
+        }
+        
+        #dialogue {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+        
+        #dialogueText {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            padding: 8px 16px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        #instructions {
+            color: white;
+            margin-top: 16px;
+        }
+        
+        .survivorImage {
+            position: absolute;
+            width: 18%;
+            height: 18%;
+            border: 2px solid #f5b014;
+            border-radius: 4px;
+            opacity: 0;
+        }
+        
+        .survivorImage img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+        
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #quizTitle {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 32px;
+        }
+        
+        #quizOptions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 80%;
+            max-height: 75%;
+            overflow-y: auto;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            background-color: #333;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #555;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            background-color: #444;
+        }
+        
+        .option.selected {
+            border: 4px solid #f5b014;
+        }
+        
+        .option img {
+            width: 64px;
+            height: 64px;
+            margin-right: 16px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .option span {
+            color: white;
+            font-size: 18px;
+        }
+        
+        #submitAnswer, #continueButton {
+            margin-top: 32px;
+            background-color: #b36200;
+            color: white;
+            border: none;
+            padding: 8px 32px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #submitAnswer:hover, #continueButton:hover {
+            background-color: #8c4e00;
+        }
+        
+        #feedback {
+            margin-top: 32px;
+            font-size: 24px;
+            font-weight: bold;
+            display: none;
+            text-align: center;
+        }
+        
+        .correct {
+            color: #4caf50;
+        }
+        
+        .incorrect {
+            color: #f44336;
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        #startTitle {
+            color: #f5b014;
+            font-size: 80px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 40px;
+        }
+        
+        #startInstructions {
+            color: white;
+            font-size: 24px;
+        }
+        
+        #continueButton {
+            display: none;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        @keyframes flyIn {
+            from {
+                transform: translate(100vw, 100vh) rotate(90deg) scale(0.1);
+                opacity: 0;
+            }
+            to {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <audio loop id="backgroundMusic">
+        <source src="theme.mp3" type="audio/mp3">
+        
+      </audio>
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <h1 id="startTitle">Survivor</h1>
+        <div id="startInstructions">Press ENTER to continue</div>
+    </div>
+
+    <div id="scene">
+        <!-- Background -->
+        <img id="background" src="couch.png" alt="Couch background">
+        
+        <!-- Character -->
+        <img id="character" src="reg.png" alt="Character">
+        
+        <!-- Thoughts container -->
+        <div id="thoughtsContainer"></div>
+        
+        <!-- Dialogue text -->
+        <div id="dialogue">
+            <div id="dialogueText"></div>
+            <div id="instructions">Press ENTER to continue</div>
+        </div>
+        
+        <!-- Images container -->
+        <div id="imagesContainer"></div>
+        
+        <!-- Quiz overlay -->
+        <div id="overlay">
+            <div id="quizTitle">Who is the "best" Survivor player?</div>
+            <div id="quizOptions"></div>
+            <button id="submitAnswer">Submit Answer</button>
+            <div id="feedback"></div>
+            <button id="continueButton">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameStarted = false;
+        let currentStep = -1; // Start at -1 to account for thoughts before first dialogue
+        let thoughtsShowing = false;
+        let imagesShowing = false;
+        let loadedImages = 0;
+        let userAnswer = '';
+        let canContinue = true;
+        
+        // Array of thought images
+        const thoughts = ['thought1.png', 'thought2.png', 'thought3.png', 'thought4.png'];
+        
+        // Array of survivor player images with their positions
+        const survivorImages = [
+            { name: 'Austin', file: 'austin.jpg', option: 'A', position: 'top: 5%; left: 5%' },
+            { name: 'Bobby', file: 'bobby.webp', option: 'B', position: 'top: 5%; right: 5%' },
+            { name: 'Brandon', file: 'brandon.jpg', option: 'C', position: 'bottom: 25%; left: 5%' },
+            { name: 'Gabriel', file: 'gabriel.jpg', option: 'D', position: 'bottom: 25%; right: 5%' },
+            { name: 'Ozzy', file: 'ozzy.jpg', option: 'E', position: 'top: 25%; left: 25%' },
+            { name: 'Ozzy', file: 'ozzy1.jpg', option: 'E', position: 'top: 25%; right: 25%' },
+            { name: 'Boston Rob', file: 'rob.jpg', option: 'F', position: 'bottom: 45%; left: 25%' },
+            { name: 'Boston Rob', file: 'rob2.jpg', option: 'F', position: 'bottom: 45%; right: 25%' },
+            { name: 'Savage', file: 'savage.webp', option: 'G', position: 'top: 50%; left: 50%' },
+            { name: 'Savage', file: 'savage2.webp', option: 'G', position: 'top: 33%; right: 33%' }
+        ];
+        
+        // Text for each step
+        const dialogueSteps = [
+            "With so many life events....",
+            "What matters most is..",
+            "\"Survivor\"",
+            "When life seems on the downhill",
+            "Survivor surely helps",
+            "Who is the \"best\" Survivor player?",
+            "Letters Revealed: N O"
+        ];
+
+        // DOM elements
+        const startScreen = document.getElementById('startScreen');
+        const scene = document.getElementById('scene');
+        const thoughtsContainer = document.getElementById('thoughtsContainer');
+        const dialogueText = document.getElementById('dialogueText');
+        const instructions = document.getElementById('instructions');
+        const imagesContainer = document.getElementById('imagesContainer');
+        const overlay = document.getElementById('overlay');
+        const quizOptions = document.getElementById('quizOptions');
+        const submitAnswer = document.getElementById('submitAnswer');
+        const feedback = document.getElementById('feedback');
+        const continueButton = document.getElementById('continueButton');
+        
+        // Initialize the scene
+        function init() {
+            
+            // Hide dialogue initially
+            dialogueText.textContent = '';
+            instructions.style.display = 'none';
+            
+            // Handle keypress events
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Set up quiz options
+            createQuizOptions();
+            
+            // Set up submit button
+            submitAnswer.addEventListener('click', checkAnswer);
+            
+            // Set up continue button
+            continueButton.addEventListener('click', () => {
+                overlay.style.display = 'none';
+                clearSurvivorImages();
+                nextStep();
+            });
+        }
+        
+        // Handle key presses
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                if (!gameStarted) {
+                    // Start the game
+                    startGame();
+                    return;
+                }
+                
+                if (!canContinue) {
+                    return; // Don't process Enter if we can't continue
+                }
+                
+                // If in quiz mode with feedback, don't process Enter
+                if (currentStep === 5 && feedback.style.display === 'block') {
+                    return;
+                }
+                
+                // Process the Enter key based on current state
+                nextStep();
+            }
+        }
+        
+        // Start the game
+        function startGame() {
+            backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+            gameStarted = true;
+            startScreen.style.display = 'none';
+            instructions.style.display = 'block';
+            
+            // Begin with thoughts
+            showThoughts();
+        }
+        
+        // Show thoughts one by one
+        function showThoughts() {
+            thoughtsShowing = true;
+            canContinue = false;
+            
+            // Clear previous thoughts
+            thoughtsContainer.innerHTML = '';
+            
+            // Positions for thoughts
+            const thoughtPositions = [
+                'top: 10%; left: 15%;',
+                'top: 20%; right: 10%;',
+                'bottom: 40%; left: 5%;',
+                'top: 35%; right: 20%;'
+            ];
+            
+            // Show each thought sequentially
+            thoughts.forEach((thoughtSrc, index) => {
+                const thoughtElement = document.createElement('img');
+                thoughtElement.className = 'thought';
+                thoughtElement.src = thoughtSrc;
+                thoughtElement.alt = `Thought ${index + 1}`;
+                thoughtElement.style.cssText = thoughtPositions[index];
+                thoughtElement.style.animation = `fadeInOut 1s forwards ${index * 1}s`;
+                
+                thoughtsContainer.appendChild(thoughtElement);
+            });
+            
+            // After all thoughts, proceed to dialogue
+            setTimeout(() => {
+                thoughtsShowing = false;
+                canContinue = true;
+                nextStep();
+            }, thoughts.length * 1000);
+        }
+        
+        // Update dialogue text
+        function updateDialogue() {
+            if (currentStep >= 0 && currentStep < dialogueSteps.length) {
+                dialogueText.textContent = dialogueSteps[currentStep];
+            } else {
+                dialogueText.textContent = '';
+            }
+            
+            // Special case for quiz step
+            if (currentStep === 5) {
+                instructions.style.display = 'none';
+                overlay.style.display = 'flex';
+                continueButton.style.display = 'none';
+            } else {
+                instructions.style.display = 'block';
+            }
+        }
+        
+        // Move to next step
+        function nextStep() {
+            currentStep++;
+            updateDialogue();
+            
+            // Special handling for different steps
+            if (currentStep === 2) {
+                // Show survivor images after "Survivor" text
+                instructions.style.display = 'none';
+                canContinue = false;
+                setTimeout(() => {
+                    showSurvivorImages();
+                }, 1000);
+            }
+        }
+        
+        // Show survivor images one by one
+        function showSurvivorImages() {
+            imagesShowing = true;
+            
+            // Add images sequentially
+            const addImage = (index) => {
+                if (index >= survivorImages.length) {
+                    // All images added, wait then allow continue
+                    setTimeout(() => {
+                        imagesShowing = false;
+                        canContinue = true;
+                        instructions.style.display = 'block';
+                    }, 2000);
+                    return;
+                }
+                
+                const image = survivorImages[index];
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'survivorImage';
+                imgContainer.style.cssText = image.position;
+                imgContainer.style.animation = `flyIn 0.5s ease-out forwards`;
+                
+                const img = document.createElement('img');
+                img.src = image.file;
+                img.alt = image.name;
+                
+                imgContainer.appendChild(img);
+                imagesContainer.appendChild(imgContainer);
+                
+                // Add next image after delay
+                setTimeout(() => {
+                    addImage(index + 1);
+                }, 500);
+            };
+            
+            // Start adding images
+            addImage(0);
+        }
+        
+        // Clear all survivor images
+        function clearSurvivorImages() {
+            imagesContainer.innerHTML = '';
+        }
+        
+        // Create quiz options
+        function createQuizOptions() {
+            // Get unique options
+            const uniqueOptions = [];
+            const seen = new Set();
+            
+            survivorImages.forEach(image => {
+                if (!seen.has(image.option)) {
+                    seen.add(image.option);
+                    uniqueOptions.push({
+                        option: image.option,
+                        name: image.name,
+                        file: image.file
+                    });
+                }
+            });
+            
+            // Create option elements
+            uniqueOptions.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.dataset.option = option.option;
+                
+                const img = document.createElement('img');
+                img.src = option.file;
+                img.alt = option.name;
+                
+                const text = document.createElement('span');
+                text.innerHTML = `<b>${option.option})</b> ${option.name}`;
+                
+                optionElement.appendChild(img);
+                optionElement.appendChild(text);
+                
+                // Add click handler
+                optionElement.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.option').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    optionElement.classList.add('selected');
+                    userAnswer = option.option;
+                });
+                
+                quizOptions.appendChild(optionElement);
+            });
+        }
+        
+        // Check user's answer
+        function checkAnswer() {
+            if (!userAnswer) {
+                return; // No answer selected
+            }
+            
+            // F and G are correct answers
+            const isCorrect = userAnswer === 'F' || userAnswer === 'G';
+            
+            // Show feedback
+            feedback.className = isCorrect ? 'correct' : 'incorrect';
+            feedback.textContent = isCorrect 
+                ? 'Correct! Boston Rob and Savage are the best Survivor players!'
+                : 'Incorrect! The best Survivor players are Boston Rob and Savage.';
+            feedback.style.display = 'block';
+            
+            // Hide submit button
+            submitAnswer.style.display = 'none';
+            
+            // Show continue button
+            continueButton.style.display = 'block';
+        }
+        
+        // Start the scene
+        window.onload = init;
+    </script>
+</body>
+</html>
